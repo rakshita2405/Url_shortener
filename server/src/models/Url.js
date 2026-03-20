@@ -16,6 +16,12 @@ const urlSchema = new mongoose.Schema(
 
   shortUrl: String,
 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+
   passwordHash: String,
 
   clicks: {

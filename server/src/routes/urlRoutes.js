@@ -2,14 +2,18 @@ import express from "express";
 import {
   createShortUrl,
   redirectUrl,
-  getAnalytics
+  getAnalytics,
+  getUserUrls
 } from "../controllers/urlController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/create", createShortUrl);
+router.post("/create", authMiddleware.verifyToken, createShortUrl);
 
-router.get("/analytics/:slug", getAnalytics);
+router.get("/analytics/:slug", authMiddleware.verifyToken, getAnalytics);
+
+router.get("/me", authMiddleware.verifyToken, getUserUrls);
 
 router.get("/:slug", redirectUrl);
 

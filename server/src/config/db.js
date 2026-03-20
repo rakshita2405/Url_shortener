@@ -1,18 +1,18 @@
 import mongoose from "mongoose";
+import dns from "dns";
 
-const connectDB = async () => {
-  try {
 
-    await mongoose.connect(process.env.MONGO_URI);
+const url = 'mongodb+srv://akshimital549:akshi1234@cluster0.pwgqnav.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-    console.log("MongoDB Connected");
+dns.setServers(['1.1.1.1','8.8.8.8']);
+const dbConnect = async () => {
+    try {
+        const data = await mongoose.connect(process.env.MONGO_URI || url, )
+        console.log('Db connected');
 
-  } catch (error) {
-
-    console.error(error);
-    process.exit(1);
-
-  }
+    } catch (err) {
+        console.log(err);
+    }
 };
 
-export default connectDB;
+export default dbConnect;

@@ -1,9 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
 import './Landing.css';
+import React, { useEffect, useRef, useState } from 'react';
 
-function Landing({ onLoginClick }) {
+function ProfileDropdown({ user, onProfile, onLogout }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="nav-profile" tabIndex={0} onBlur={() => setOpen(false)}>
+      <span className="nav-username">{user.username}</span>
+      <span
+        className="nav-avatar"
+        onClick={() => setOpen((v) => !v)}
+        style={{ cursor: 'pointer' }}
+        title="Profile menu"
+      >
+        {user.username ? user.username[0].toUpperCase() : 'U'}
+      </span>
+      {open && (
+        <div className="profile-dropdown-glass">
+          <button onClick={onLogout}>Logout</button>
+          <button onClick={onProfile}>Profile</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Landing({ onLoginClick, user, onProfile, onLogout }) {
   const canvasRef = useRef(null);
+  const ribbonTrailRef = useRef([]);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isTextHover, setIsTextHover] = useState(false);
   const stats = [
     { value: '10M+', label: 'Links Created', change: '+245%' },
     { value: '500M+', label: 'Clicks Tracked', change: '+156%' },
@@ -11,7 +36,7 @@ function Landing({ onLoginClick }) {
     { value: '99.9%', label: 'Uptime', change: 'Verified' }
   ];
 
-  // Particle system setup
+  // Particle system + neon ribbon setup
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -39,7 +64,6 @@ function Landing({ onLoginClick }) {
         this.radius = Math.random() * 1.5 + 0.5;
         this.opacity = Math.random() * 0.3 + 0.1;
       }
-
       update() {
         this.x += this.vx;
         this.y += this.vy;
@@ -48,7 +72,6 @@ function Landing({ onLoginClick }) {
         if (this.y < 0) this.y = canvas.height;
         if (this.y > canvas.height) this.y = 0;
       }
-
       draw(ctx) {
         ctx.fillStyle = `hsla(210, 70%, 60%, ${this.opacity})`;
         ctx.beginPath();
@@ -56,39 +79,95 @@ function Landing({ onLoginClick }) {
         ctx.fill();
       }
     }
-
     for (let i = 0; i < particleCount; i++) {
       particles.push(new Particle());
     }
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw particles
       particles.forEach((particle) => {
         particle.update();
         particle.draw(ctx);
       });
+      // Draw wavy neon ribbon with sparkles if not over text
+      const ribbonTrail = ribbonTrailRef.current;
+      if (!isTextHover && ribbonTrail.length > 1) {
+        ctx.save();
+        const now = Date.now();
+        for (let i = 1; i < ribbonTrail.length; i++) {
+          const p0 = ribbonTrail[i - 1];
+          const p1 = ribbonTrail[i];
+          // Wavy effect
+          const t = i / ribbonTrail.length;
+          const wave = Math.sin(now / 180 + i * 0.6) * 10 * (1 - t);
+          const dx = p1.y - p0.y;
+          const dy = p0.x - p1.x;
+          const mag = Math.sqrt(dx * dx + dy * dy) || 1;
+          const wx = (dx / mag) * wave;
+          const wy = (dy / mag) * wave;
+          // Gradient color
+          const grad = ctx.createLinearGradient(p0.x, p0.y, p1.x + wx, p1.y + wy);
+          grad.addColorStop(0, `rgba(0,255,200,${0.18 + 0.5 * t})`);
+          grad.addColorStop(1, `rgba(255,0,255,${0.10 + 0.7 * t})`);
+          ctx.strokeStyle = grad;
+          ctx.shadowColor = t > 0.7 ? '#ff00e1' : '#00fff7';
+          ctx.shadowBlur = 18 - 12 * t;
+          ctx.lineWidth = 8 - 6 * t;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x + wx, p1.y + wy);
+          ctx.stroke();
+          // Sparkles
+          if (Math.random() < 0.13 * t) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(p1.x + wx, p1.y + wy, 1.5 + 1.5 * Math.random(), 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+        ctx.restore();
+      }
       requestAnimationFrame(animate);
     };
-
     animate();
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isTextHover]);
 
-  // Mouse tracking
+  // Mouse tracking and ribbon trail
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
+      // Ribbon trail logic
+      const arr = ribbonTrailRef.current;
+      arr.push({ x: e.clientX, y: e.clientY });
+      if (arr.length > 16) arr.shift();
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Track if cursor is over text
+  useEffect(() => {
+    const handleMove = (e) => {
+      let el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el) return setIsTextHover(false);
+      const tag = el.tagName.toLowerCase();
+      const isText = tag === 'a' || tag === 'button' || tag === 'span' || tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6' || tag === 'p' || tag === 'input' || tag === 'label' || tag === 'li' || tag === 'b' || tag === 'strong';
+      setIsTextHover(isText);
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
   }, []);
 
   return (
@@ -108,7 +187,11 @@ function Landing({ onLoginClick }) {
             <a href="#features">Features</a>
             <a href="#benefits">Benefits</a>
             <a href="#pricing">Pricing</a>
-            <button className="nav-btn" onClick={onLoginClick}>Login</button>
+            {user ? (
+              <ProfileDropdown user={user} onProfile={onProfile} onLogout={onLogout} />
+            ) : (
+              <button className="nav-btn" onClick={onLoginClick}>Login</button>
+            )}
           </div>
         </div>
       </nav>

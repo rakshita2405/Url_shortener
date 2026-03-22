@@ -33,6 +33,30 @@ export const getProfile = async () => {
   return resp.json();
 };
 
+export const updateProfile = async (payload) => {
+  const resp = await fetch(`${API_BASE}/auth/profile`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(payload)
+  });
+  return resp.json();
+};
+
+export const deleteAccount = async (password) => {
+  const resp = await fetch(`${API_BASE}/auth/account`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ password })
+  });
+  return resp.json();
+};
+
 export const createShortUrl = async (payload) => {
   const resp = await fetch(`${API_BASE}/url/create`, {
     method: 'POST',

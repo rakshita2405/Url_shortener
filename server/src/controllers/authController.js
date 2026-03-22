@@ -77,6 +77,7 @@ const authController = {
             id: user._id,
             username: user.username,
             email: user.email,
+            avatarUrl: user.avatarUrl || '',
             createdAt: user.createdAt
           }
         }
@@ -86,6 +87,53 @@ const authController = {
       res.status(404).json({
         success: false,
         message: error.message || 'User not found'
+      });
+    }
+  },
+
+  updateProfile: async (req, res) => {
+    try {
+      const { username, email, avatarUrl, currentPassword, newPassword } = req.body;
+      const updated = await authService.updateProfile(req.user.userId, {
+        username,
+        email,
+        avatarUrl,
+        currentPassword,
+        newPassword
+      });
+      res.json({
+        success: true,
+        message: 'Profile updated',
+        data: { user: updated }
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Update failed'
+      });
+    }
+  },
+
+  deleteAccount: async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password is required to delete your account'
+        });
+      }
+      await authService.deleteAccount(req.user.userId, password);
+      res.json({
+        success: true,
+        message: 'Account deleted'
+      });
+    } catch (error) {
+      console.error('Delete account error:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Could not delete account'
       });
     }
   }

@@ -9,7 +9,7 @@ import errorHandler from "./middleware/errorHandler.js";
 
 const App = express();
 
-App.use(express.json());
+App.use(express.json({ limit: '2mb' }));
 App.use(cors());
 App.use(helmet());
 App.use(morgan("dev"));

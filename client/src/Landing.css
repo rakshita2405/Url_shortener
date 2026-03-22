@@ -38,16 +38,17 @@ html {
   pointer-events: none;
 }
 
+
 .cursor-dot {
   position: fixed;
   width: 10px;
   height: 10px;
-  background: linear-gradient(135deg, #00ff41 0%, #00ffff 100%);
+  background: transparent;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.9);
+  box-shadow: none;
   display: none;
 }
 
